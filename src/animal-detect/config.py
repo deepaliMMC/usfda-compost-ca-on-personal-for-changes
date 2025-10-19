@@ -7,7 +7,7 @@ class Settings(BaseModel):
     # -------------------- PATHS --------------------
     DATA_ROOT: Path = Path("/home/sagemaker-user/ANIMAL-DETECT-CA/datasets/animal/animal_yolo_3band_v1")
     PROJECT_DIR: Path = Path("/home/sagemaker-user/animal-yolo/animal_yolo_single")
-    RUN_NAME: str = "yolov8m_4ch"
+    RUN_NAME: str = "yolov8m_3ch"
     PRETRAINED: Path = Path("/home/sagemaker-user/ANIMAL-DETECT-CA/src/animal-detect/data/yolov11n.pt")  # local weights
     YOLO_MODEL_PATH:Path = Path("/home/sagemaker-user/ANIMAL-DETECT-CA/src/animal-detect/data/model.pt")
     IMAGE_PATH:Path = Path("/home/sagemaker-user/ANIMAL-DETECT-CA/test_data/animal/animal_yoloooo_3band_v1")
