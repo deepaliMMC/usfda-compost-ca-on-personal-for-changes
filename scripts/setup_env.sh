@@ -50,6 +50,6 @@ fi
 
 # Create data directories
 echo "Creating data directories..."
-mkdir -p data/raw data/processed src/cafo-class-fl/data/logs src/cafo-class-fl/data/weights
+mkdir -p data/raw data/processed src/animal-detect-fl/data/logs src/cafo-class-fl/data/weights
 
 echo "Setup complete! Activate the environment with: source .venv/bin/activate"
