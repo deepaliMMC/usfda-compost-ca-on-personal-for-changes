@@ -1,4 +1,4 @@
-# Compost Facility Detection
+# livestockkk
 
 Object detection of compost facilities using NAIP aerial imagery and YOLOv8.
 
