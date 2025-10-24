@@ -1,7 +1,6 @@
-# livestock
+# Title: California Livestock Estimation Model
+About: Estimates the number of grazing animals on California pasturelands. Provides FDA with risk assessment data based on livestock density near produce farms.
 
-> Estimates the number of grazing animals on California pasturelands.  
-> Provides FDA with risk assessment data based on livestock density near produce farms.
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![YOLOv11](https://img.shields.io/badge/YOLOv11-Ultralytics-00FFFF.svg)](https://github.com/ultralytics/ultralytics)
