@@ -134,7 +134,7 @@ pip install -r requirements.txt
 ```
 
 Core dependencies:
-- `ultralytics>=8.0.0` - YOLOv8 framework
+- `ultralytics>=8.0.0` - YOLO framework
 - `rasterio` - Geospatial raster I/O
 - `geopandas` - Vector data handling
 - `shapely` - Geometric operations
@@ -178,37 +178,31 @@ Edit `configs/default.yaml` to customize:
 
 ```yaml
 # S3 Configuration
-BUCKET: "objectdetction-ca"
-NAIP_PREFIX: "NAIP_Imagery_2024/"
-OUT_PREFIX: "compost_yolo_4band_v1"
+BUCKET: "cafo-naip-data"
+RGB_PREFIX: "processed/"
+OUT_PREFIX: "basemap18"
 
 # Input Files
 POS_GEOJSON: "positive_polygons.geojson"
 NEG_GEOJSON: "neg_points.geojson"
 
 # Data Generation
-CHIP_SIZE: 1024
+CHIP_SIZE: 512
 NEG_BUFFER_M: 200.0
 POS_CLASS_ID: 0
 MAX_WORKERS: 24
 
 # Training Parameters
-IMG_SIZE: 1024
-EPOCHS: 100
-BATCH: 12
+IMG_SIZE: 512
+EPOCHS: 200
+BATCH: 64
 LR0: 0.0005
 WEIGHT_DECAY: 0.0005
 NUM_WORKERS: 8
 SAVE_PERIOD: 10
 
-# Paths
-DATA_ROOT: "/path/to/datasets/compost_yoloooo_4band_v1"
-PROJECT_DIR: "/path/to/compost_yolo4_single"
-RUN_NAME: "yolov8m_4ch"
-PRETRAINED: "/path/to/yolov8m.pt"
-
 # Classes
-CLASS_NAMES: ["compost"]
+CLASS_NAMES: ["animal"]
 ```
 
 Or override via environment variables.
@@ -218,22 +212,22 @@ Or override via environment variables.
 Create training chips from NAIP imagery and labeled polygons/points.
 
 ```bash
-python src/compost-detect/data_generation.py
+python src/animal-detect/data_generation.py
 ```
 
 **What it does:**
-- Fetches NAIP tile list from S3
-- Reads positive polygon labels (compost facilities)
-- Reads negative point samples (non-compost areas)
-- Generates 1024×1024 chips centered on facilities
+- Fetches RGB tile list from S3
+- Reads positive polygon labels (animals)
+- Reads negative point samples (non-animals)
+- Generates 512*512 chips centered on facilities
 - Creates negative samples with buffer distance
 - Converts polygons to YOLO format bounding boxes
 - Splits data into train/val based on tile location
 - Uploads chips and labels to S3
 
 **Inputs:**
-- NAIP 4-band COGs on S3 (RGB+NIR)
-- `compost_polygons.geojson` - Polygon geometries of compost facilities
+- 3-band COGs on S3 (RGB)
+- `compost_polygons.geojson` - Polygon geometries of individual animals
 - `neg_points.geojson` - Point locations for negative samples
 
 **Outputs:**
@@ -252,27 +246,27 @@ python src/compost-detect/data_generation.py
 
 ### 2. Training
 
-Train YOLOv8m model on generated dataset.
+Train YOLOv11n model on generated dataset.
 
 ```bash
-python src/compost-detect/training.py
+python src/animal-detect/training.py
 ```
 
 **Training Configuration:**
 
 | Parameter | Value | Description |
 |-----------|-------|-------------|
-| Model | YOLOv8m | Medium variant (25M parameters) |
-| Image Size | 1024×1024 | Input resolution |
+| Model | YOLOv11n | Medium variant (25M parameters) |
+| Image Size | 512×512 | Input resolution |
 | Batch Size | 12 | Fits 24GB GPU |
-| Epochs | 100 | Maximum training epochs |
+| Epochs | 200 | Maximum training epochs |
 | Learning Rate | 5e-4 | Initial LR (with warmup) |
 | Weight Decay | 5e-4 | L2 regularization |
-| Workers | 8 | DataLoader processes |
+| Workers | 16 | DataLoader processes |
 | Save Period | 10 | Checkpoint every N epochs |
 
 **Features:**
-- 4-channel input support (RGB + NIR)
+- 3-channel input support (RGB)
 - Automatic mixed precision (AMP)
 - Cosine learning rate scheduling with warmup
 - Data augmentation (mosaic, flip, scale, crop)
@@ -303,22 +297,22 @@ cat {PROJECT_DIR}/{RUN_NAME}/results.csv
 
 ### 3. Inference
 
-Run predictions on new NAIP imagery.
+Run predictions on new RGB imagery.
 
 ```bash
-python src/compost-detect/prediction.py
+python src/animal-detect/prediction.py
 ```
 
 **What it does:**
-- Loads trained YOLOv8 model
-- Reads 4-channel test images
+- Loads trained YOLOv11 model
+- Reads 3-channel test images
 - Runs inference with configurable thresholds
-- Saves annotated images with bounding boxes
+- Saves bounding boxes predicte on dannotated images as geojson
 - Outputs prediction results
 
 **Outputs:**
 - Annotated images with detections
-- Bounding box coordinates and confidence scores
+- Bounding box coordinates and confidence scores as geojson
 - JSON/CSV with detection results
 
 **Configuration:**
@@ -329,7 +323,7 @@ model = YOLO(settings.YOLO_MODEL_PATH)
 
 results = model.predict(
     source=settings.IMAGE_PATH,
-    imgsz=1024,
+    imgsz=512,
     conf=0.25,      # Confidence threshold
     iou=0.5,        # NMS IoU threshold
     save=True,      # Save annotated images
