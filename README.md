@@ -1,4 +1,4 @@
-# livestockkk
+# livestock
 
 > Estimates the number of grazing animals on California pasturelands.  
 > Provides FDA with risk assessment data based on livestock density near produce farms.
@@ -330,44 +330,94 @@ results = model.predict(
     show=False      # Display results
 )
 ```
-#################################################
-### 4. Post-Processing
+### 4. Post-Processing and Spatial Quality Validation
 
-Convert TIFF chips to PNG and perform analysis.
+Following model inference, each 512×512 image patch generated a **GeoJSON file** containing bounding boxes of detected animals with associated confidence scores.  
+Because the inference pipeline directly produced spatial vector outputs, no raster-to-vector or TIFF/PNG conversion was required.
 
-```bash
-python src/compost-detect/post_processing.py
-```
+This stage focused on **data consolidation, spatial consistency validation, and quality assurance** to ensure reliable, analysis-ready detection outputs.
 
-**What it does:**
-- Converts 4-band TIFF chips to PNG format
-- Preserves all bands in conversion
-- Backs up original TIFFs
-- Prepares data for visualization/analysis
+---
 
-**Outputs:**
-- PNG images in each split directory
-- Original TIFFs backed up to `tiff_backup/` folders
+#### 🧩 Post-Processing Workflow
+
+1. **GeoJSON Consolidation and Merging**  
+   - All per-patch detection GeoJSON files were programmatically combined into a single, statewide detection layer.  
+   - The process, implemented via a **GeoPandas-based script** (`merge_geojson.py`), performed:
+     - Batch reading of all patch-level GeoJSONs from the output directory  
+     - Validation of feature geometries and metadata integrity  
+     - Enforcement of a unified **coordinate reference system (CRS: EPSG:3857)**  
+     - Concatenation into a single GeoDataFrame  
+     - Export to both `.geojson` and `.gpkg` formats for interoperability  
+
+2. **Spatial Consistency Verification**  
+   - Confirmed alignment between detection geometries and the corresponding basemap tiles.  
+   - Verified that all outputs maintained consistent CRS definitions and bounding extents.  
+
+3. **Detection Quality Filtering**  
+   - Removed **low-confidence detections** (`confidence < 0.25`).  
+   - Eliminated **duplicate and overlapping boxes** created by sliding-window overlaps.  
+   - Ensured all surviving features represented unique, valid animal detections.  
+
+4. **Validation Against Ground Reference Data**  
+   - Conducted spot-checks comparing detection clusters with verified ground-truth polygons.  
+   - Assessed detection density patterns for spatial realism and alignment with expected grazing areas.  
+
+---
+
+#### 📈 Integration with Downstream Analysis
+
+The validated and merged detection layer served as a key spatial input for the  
+**“Grazing Activity Classification”** project, where animal distribution data was used to classify regions as  
+**Active Grazing Zones** or **Inactive/Low-Activity Areas** based on livestock density metrics.
+
+---
+
+#### 🗂️ Output Artifacts
+
+| File | Description |
+|------|--------------|
+| `*_predictions.geojson` | Raw YOLOv11n per-patch detections with confidence attributes |
+| `merged_predictions.geojson` | Unified statewide detection layer after spatial validation |
+| `merged_predictions.gpkg` | GeoPackage version preserving CRS and metadata |
+| `grazing_activity_inputs.geojson` | Quality-assured dataset used for Grazing Activity Classification |
+
+---
+
+#### ⚙️ Summary of Post-Processing Objectives
+
+| Objective | Description |
+|------------|--------------|
+| **CRS Standardization** | All detections validated to EPSG:3857 projection |
+| **Data Integration** | Combined 1000+ patch-level GeoJSONs into a single statewide dataset |
+| **Error Filtering** | Removed false or redundant detections |
+| **Quality Assurance** | Verified accuracy, geometry validity, and alignment |
+| **Analytical Readiness** | Prepared data for grazing intensity and density mapping |
+
+---
+
+**In summary:**  
+This post-processing and spatial validation stage ensured that YOLOv11n outputs were geometrically accurate, quality-checked, and fully standardized for downstream geospatial modeling and regulatory use within the **LIVESTOCK-EST-CA** framework.
 
 ## Configuration Details
 
 ### Key Parameters
 
 **Data Generation:**
-- `CHIP_SIZE`: 1024px square chips (standard for YOLOv8 at high res)
-- `NEG_BUFFER_M`: 200m buffer around positive samples for negative mining
+- `CHIP_SIZE`: 512px square chips (standard for YOLOv8 at high res)
+- `NEG_BUFFER_M`: 1m buffer around positive samples for negative mining
 - `MAX_WORKERS`: Parallel workers for tile processing (recommend 24-32 on high-core machines)
 
 **Training:**
 - `EPOCHS`: 100 (early stopping based on validation mAP)
-- `BATCH`: 12 (adjust based on GPU memory)
+- `BATCH`: 64 (adjust based on GPU memory)
 - `LR0`: 5e-4 (initial learning rate with warmup)
 - `WEIGHT_DECAY`: 5e-4 (L2 regularization)
-- `IMG_SIZE`: 1024 (maintain consistency with chip size)
+- `IMG_SIZE`: 512 (maintain consistency with chip size)
 
 **Model:**
 - YOLOv8m: Best balance of speed and accuracy
-- 4-channel input: RGB + NIR for enhanced detection
+- 3-channel input: RGB for enhanced detection
 - Single class: "compost"
 
 ### Data Split Strategy
