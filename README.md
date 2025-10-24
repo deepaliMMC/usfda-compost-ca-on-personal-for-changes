@@ -1,18 +1,21 @@
 # livestockkk
 
-Object detection of compost facilities using NAIP aerial imagery and YOLOv8.
+> Estimates the number of grazing animals on California pasturelands.  
+> Provides FDA with risk assessment data based on livestock density near produce farms.
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-00FFFF.svg)](https://github.com/ultralytics/ultralytics)
+[![YOLOv11](https://img.shields.io/badge/YOLOv11-Ultralytics-00FFFF.svg)](https://github.com/ultralytics/ultralytics)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
 
 ## Overview
 
-This project detects compost facilities from 4-band NAIP aerial imagery (RGB + NIR) using YOLOv8 object detection:
+This project detects animals from 3-band aerial imagery (RGB) using YOLOv11 object detection:
 
-**Data**: 4-band NAIP aerial imagery (RGB + NIR) from AWS S3
+**Data**: 3-band aerial imagery (RGB) from AWS S3
 
-**Model**: YOLOv8m trained on 1024×1024 image chips
+**Model**: YOLOv11n trained on 512×512 image chips
 
 **Approach**: Single-class object detection with positive/negative sampling and spatial split for validation
 
@@ -20,15 +23,16 @@ This project detects compost facilities from 4-band NAIP aerial imagery (RGB + N
 
 ### Mission
 
-Detect and localize compost facilities from NAIP imagery to support waste management analytics, regulatory compliance, and environmental monitoring. Outputs enable stakeholders to identify facility locations, estimate operational areas, and perform spatial analysis at scale.
+Estimate and localize grazing animals (cattle) across California pasturelands using aerial imagery.  
+Outputs support **FDA food safety risk assessment** by quantifying livestock density near produce farms.
 
 ### Technical Approach
 
-**Input Data:** NAIP 4-band aerial imagery (RGB + NIR) from AWS S3, chip-based sampling from labeled polygons and negative point samples.
+**Input Data:** 3-band aerial imagery (RGB) from AWS S3, chip-based sampling from labeled polygons and negative point samples.
 
 **Model Architecture:**
-- **Primary:** YOLOv8m (medium variant for production)
-- **Input Size:** 1024×1024 pixels (4 channels)
+- **Primary:** YOLOv11 (tiny variant) optimized for small objects
+- **Input Size:** 512×512 pixels (3 channels)
 - **Training Strategy:** Single-class object detection with bounding box regression
 - **Data Split:** Spatial tile-based train/val split to prevent data leakage
 
@@ -42,13 +46,12 @@ Detect and localize compost facilities from NAIP imagery to support waste manage
 
 | Metric | Target | Achieved | Interpretation |
 |--------|--------|----------|----------------|
-| mAP@0.5 | ≥ 0.75 | 0.88 | Mean Average Precision at IoU 0.5 |
-| mAP@0.5:0.95 | ≥ 0.60 | 0.58 | Mean Average Precision across IoU thresholds |
-| Precision | ≥ 0.80 | 0.90 | Minimize false positives |
-| Recall | ≥ 0.75 | 0.83 | Minimize false negatives |
-| Inference Speed | ≥ 100 img/s | 104 img/s | Real-time processing capability |
+| mAP@0.5 | ≥ 0.75 |  **0.98**  | Mean Average Precision at IoU 0.5 |
+| mAP@0.5:0.95 | ≥ 0.60 | **0.45** | Mean Average Precision across IoU thresholds |
+| Precision | ≥ 0.80 | **0.8355** | Minimize false positives |
+| Recall | ≥ 0.75 | **0.8186**  | Minimize false negatives |
 
-**Operational Interpretation:** YOLOv8m provides the best balance between accuracy and speed for compost facility detection. The model handles variable facility sizes and orientations while maintaining robust performance across different NAIP tiles and years.
+**Operational Interpretation:** YOLOv11n provides the best balance between accuracy and speed for animal detection. The model handles smaller animal sizes and orientations while maintaining robust performance across different imagery tiles and years.
 
 ### Release Quality Gates
 
@@ -114,7 +117,7 @@ compost-detect/
 
 ```bash
 git clone <your-repo-url>
-cd compost-detect
+cd livestock-est-ca
 ```
 
 ### 2. Create virtual environment
@@ -180,7 +183,7 @@ NAIP_PREFIX: "NAIP_Imagery_2024/"
 OUT_PREFIX: "compost_yolo_4band_v1"
 
 # Input Files
-POS_GEOJSON: "compost_polygons.geojson"
+POS_GEOJSON: "positive_polygons.geojson"
 NEG_GEOJSON: "neg_points.geojson"
 
 # Data Generation
