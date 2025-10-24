@@ -330,7 +330,7 @@ results = model.predict(
     show=False      # Display results
 )
 ```
-
+#################################################
 ### 4. Post-Processing
 
 Convert TIFF chips to PNG and perform analysis.
