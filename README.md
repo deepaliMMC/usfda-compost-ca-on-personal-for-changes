@@ -405,10 +405,7 @@ python src/compost-detect/post_processing.py
 # Reduce batch size in config
 BATCH: 8  # or lower
 
-# Reduce image size (trades accuracy)
-IMG_SIZE: 640
-
-# Enable gradient accumulation in YOLOv8
+# Enable gradient accumulation in YOLOv11
 # (set in ultralytics training arguments if needed)
 ```
 
@@ -422,10 +419,10 @@ aws s3 ls s3://{BUCKET}/
 aws s3api get-bucket-policy --bucket {BUCKET}
 
 # Test file access
-aws s3 cp s3://{BUCKET}/{NAIP_PREFIX}/sample.tif ./test.tif
+aws s3 cp s3://{BUCKET}/{RGB_PREFIX}/sample.tif ./test.tif
 
 # Verify GDAL VSI access
-gdalinfo /vsis3/{BUCKET}/{NAIP_PREFIX}/sample.tif
+gdalinfo /vsis3/{BUCKET}/{RGB_PREFIX}/sample.tif
 ```
 
 ### GDAL/Rasterio Issues
